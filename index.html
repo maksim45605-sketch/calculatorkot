@@ -1,0 +1,2104 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расширенный калькулятор с магазином</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            padding: 20px;
+            transition: background 0.5s ease;
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            position: relative;
+        }
+        
+        body.custom-bg {
+            background: var(--custom-bg);
+        }
+        
+        /* Панель управления сверху */
+        .top-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .telegram-link {
+            background: linear-gradient(135deg, #0088cc, #00b2ff);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            font-size: 1.8rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .telegram-link:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .icon-btn {
+            background: linear-gradient(135deg, #ff6b6b, #ffa726);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .icon-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .settings-btn {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+        }
+        
+        .stats-counter {
+            position: fixed;
+            top: 90px;
+            left: 20px;
+            color: white;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 99;
+        }
+        
+        .calculator {
+            width: 320px;
+            background-color: #1a1a1a;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s ease;
+            margin-top: 60px;
+        }
+        
+        .display {
+            background-color: #0c0c0c;
+            color: #fff;
+            font-size: 2.5rem;
+            text-align: right;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            word-break: break-all;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        
+        .previous-operand {
+            font-size: 1.2rem;
+            color: #aaa;
+            min-height: 25px;
+        }
+        
+        .current-operand {
+            font-size: 2.5rem;
+            color: #fff;
+        }
+        
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 12px;
+        }
+        
+        button {
+            border: none;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            height: 70px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .number, .decimal {
+            background-color: #333;
+            color: white;
+        }
+        
+        .number:hover, .decimal:hover {
+            background-color: #444;
+        }
+        
+        .operator {
+            background-color: #ff9500;
+            color: white;
+        }
+        
+        .operator:hover {
+            background-color: #ffaa33;
+        }
+        
+        .equals {
+            background-color: #ff9500;
+            color: white;
+            grid-column: span 2;
+        }
+        
+        .equals:hover {
+            background-color: #ffaa33;
+        }
+        
+        .clear, .delete {
+            background-color: #a6a6a6;
+            color: #000;
+        }
+        
+        .clear:hover, .delete:hover {
+            background-color: #b8b8b8;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: #1a1a1a;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 25px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            border: 2px solid #ff9500;
+            color: white;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #333;
+        }
+        
+        .modal-title {
+            font-size: 1.8rem;
+            color: #ff9500;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            line-height: 1;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+        }
+        
+        .achievement-item, .skin-item {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            border: 2px solid #333;
+            transition: border-color 0.3s;
+        }
+        
+        .achievement-item.unlocked, .skin-item.unlocked {
+            border-color: #ff9500;
+        }
+        
+        .achievement-icon, .skin-preview {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            margin-right: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+        
+        .achievement-icon {
+            background: linear-gradient(135deg, #ffa726, #ff6b6b);
+        }
+        
+        .achievement-info h3, .skin-info h3 {
+            color: #ff9500;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-info p, .skin-info p {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        
+        .skin-preview {
+            background-color: #333;
+            border: 2px solid #555;
+        }
+        
+        .apply-skin-btn {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: opacity 0.3s;
+        }
+        
+        .apply-skin-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 1001;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 300px;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+        
+        .notification-message {
+            font-size: 0.9rem;
+        }
+        
+        .notification.achievement {
+            background: linear-gradient(135deg, #ffa726, #ff6b6b);
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #ff9500;
+            color: #000;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+        
+        /* История вычислений */
+        .history-item {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #ff9500;
+        }
+        
+        .history-expression {
+            font-size: 1.1rem;
+            color: #fff;
+        }
+        
+        .history-result {
+            font-size: 0.9rem;
+            color: #aaa;
+            text-align: right;
+        }
+        
+        .history-timestamp {
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .telegram-help {
+            margin-top: 20px;
+            padding: 15px;
+            background: linear-gradient(135deg, #0088cc, #00b2ff);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .telegram-help a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        /* Настройки */
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        
+        .settings-section h3 {
+            color: #ff9500;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .setting-item {
+            margin-bottom: 15px;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+        
+        .bg-upload {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .bg-upload input[type="file"] {
+            display: none;
+        }
+        
+        .bg-upload label {
+            background: #333;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .bg-upload label:hover {
+            background: #444;
+        }
+        
+        .bg-reset {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .bg-preview {
+            width: 100%;
+            height: 100px;
+            border-radius: 10px;
+            margin-top: 10px;
+            background-size: cover;
+            background-position: center;
+            border: 2px solid #333;
+        }
+        
+        /* Создание своего скина */
+        .skin-creator {
+            margin-top: 20px;
+        }
+        
+        .color-picker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .color-option {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .color-option.selected {
+            border-color: #fff;
+        }
+        
+        .custom-skin-input {
+            width: 100%;
+            padding: 10px;
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .custom-skin-preview {
+            width: 100%;
+            height: 100px;
+            border-radius: 10px;
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 10px;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        /* Темы калькулятора */
+        .skin-default {
+            background-color: #1a1a1a;
+        }
+        
+        .skin-dark {
+            background-color: #0a0a0a;
+        }
+        
+        .skin-dark .display {
+            background-color: #000;
+            border-color: #444;
+        }
+        
+        .skin-dark .number, .skin-dark .decimal {
+            background-color: #222;
+        }
+        
+        .skin-blue {
+            background: linear-gradient(135deg, #1a2980, #26d0ce);
+        }
+        
+        .skin-blue .display {
+            background-color: rgba(0, 10, 30, 0.8);
+            border-color: #26d0ce;
+        }
+        
+        .skin-blue .number, .skin-blue .decimal {
+            background-color: #1a2980;
+        }
+        
+        .skin-blue .operator, .skin-blue .equals {
+            background-color: #26d0ce;
+            color: #000;
+        }
+        
+        .skin-red {
+            background: linear-gradient(135deg, #8B0000, #FF4500);
+        }
+        
+        .skin-red .display {
+            background-color: rgba(30, 0, 0, 0.8);
+            border-color: #FF4500;
+        }
+        
+        .skin-red .number, .skin-red .decimal {
+            background-color: #8B0000;
+        }
+        
+        .skin-red .operator, .skin-red .equals {
+            background-color: #FF4500;
+        }
+        
+        .skin-green {
+            background: linear-gradient(135deg, #006400, #32CD32);
+        }
+        
+        .skin-green .display {
+            background-color: rgba(0, 30, 0, 0.8);
+            border-color: #32CD32;
+        }
+        
+        .skin-green .number, .skin-green .decimal {
+            background-color: #006400;
+        }
+        
+        .skin-green .operator, .skin-green .equals {
+            background-color: #32CD32;
+            color: #000;
+        }
+        
+        .skin-gold {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+        }
+        
+        .skin-gold .display {
+            background-color: rgba(40, 30, 0, 0.8);
+            border-color: #FFD700;
+            color: #000;
+        }
+        
+        .skin-gold .previous-operand {
+            color: #555;
+        }
+        
+        .skin-gold .number, .skin-gold .decimal {
+            background-color: #FFA500;
+            color: #000;
+        }
+        
+        .skin-gold .operator, .skin-gold .equals {
+            background-color: #FFD700;
+            color: #000;
+        }
+        
+        .skin-gold .clear, .skin-gold .delete {
+            background-color: #DAA520;
+            color: #000;
+        }
+        
+        .skin-purple {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+        }
+        
+        .skin-purple .display {
+            background-color: rgba(20, 0, 40, 0.8);
+            border-color: #9d4edd;
+        }
+        
+        .skin-purple .number, .skin-purple .decimal {
+            background-color: #6a11cb;
+        }
+        
+        .skin-purple .operator, .skin-purple .equals {
+            background-color: #9d4edd;
+        }
+        
+        .skin-pink {
+            background: linear-gradient(135deg, #ff6b9d, #ff8e53);
+        }
+        
+        .skin-pink .display {
+            background-color: rgba(40, 0, 20, 0.8);
+            border-color: #ff6b9d;
+        }
+        
+        .skin-pink .number, .skin-pink .decimal {
+            background-color: #ff6b9d;
+        }
+        
+        .skin-pink .operator, .skin-pink .equals {
+            background-color: #ff8e53;
+        }
+        
+        .skin-cyber {
+            background: linear-gradient(135deg, #00ffcc, #0066ff);
+        }
+        
+        .skin-cyber .display {
+            background-color: rgba(0, 20, 40, 0.9);
+            border-color: #00ffcc;
+        }
+        
+        .skin-cyber .number, .skin-cyber .decimal {
+            background-color: #0066ff;
+        }
+        
+        .skin-cyber .operator, .skin-cyber .equals {
+            background-color: #00ffcc;
+            color: #000;
+        }
+        
+        .skin-matrix {
+            background: linear-gradient(135deg, #00ff00, #003300);
+        }
+        
+        .skin-matrix .display {
+            background-color: rgba(0, 20, 0, 0.9);
+            border-color: #00ff00;
+            color: #00ff00;
+        }
+        
+        .skin-matrix .previous-operand {
+            color: #00cc00;
+        }
+        
+        .skin-matrix .number, .skin-matrix .decimal {
+            background-color: #003300;
+            color: #00ff00;
+        }
+        
+        .skin-matrix .operator, .skin-matrix .equals {
+            background-color: #00ff00;
+            color: #000;
+        }
+        
+        .skin-matrix .clear, .skin-matrix .delete {
+            background-color: #006600;
+            color: #00ff00;
+        }
+        
+        /* Анимированный переливающийся скин */
+        @keyframes rainbow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .skin-rainbow {
+            background: linear-gradient(-45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff80, #0080ff, #8000ff, #ff0080, #ff0000);
+            background-size: 400% 400%;
+            animation: rainbow 15s ease infinite;
+        }
+        
+        .skin-rainbow .display {
+            background-color: rgba(0, 0, 0, 0.8);
+            border-color: white;
+        }
+        
+        .skin-rainbow .number, .skin-rainbow .decimal {
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+        }
+        
+        .skin-rainbow .operator, .skin-rainbow .equals {
+            background-color: rgba(255, 255, 255, 0.9);
+            color: #000;
+        }
+        
+        .skin-rainbow .clear, .skin-rainbow .delete {
+            background-color: rgba(100, 100, 100, 0.7);
+            color: white;
+        }
+        
+        /* Скин неон */
+        .skin-neon {
+            background-color: #0a0a0a;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 
+                        inset 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+        
+        .skin-neon .display {
+            background-color: #000;
+            border-color: #0ff;
+            box-shadow: 0 0 10px #0ff;
+            color: #0ff;
+        }
+        
+        .skin-neon .previous-operand {
+            color: #0ff;
+        }
+        
+        .skin-neon .number, .skin-neon .decimal {
+            background-color: #111;
+            color: #0ff;
+            box-shadow: 0 0 5px #0ff;
+        }
+        
+        .skin-neon .operator, .skin-neon .equals {
+            background-color: #f0f;
+            color: #000;
+            box-shadow: 0 0 10px #f0f;
+        }
+        
+        .skin-neon .clear, .skin-neon .delete {
+            background-color: #ff0;
+            color: #000;
+            box-shadow: 0 0 10px #ff0;
+        }
+        
+        /* Секретный скин */
+        .skin-secret {
+            background: linear-gradient(135deg, #2012a0, #20b2aa);
+        }
+        
+        .skin-secret .display {
+            background-color: rgba(32, 18, 160, 0.8);
+            border-color: #20b2aa;
+            color: #fff;
+        }
+        
+        .skin-secret .previous-operand {
+            color: #a0d2ff;
+        }
+        
+        .skin-secret .number, .skin-secret .decimal {
+            background-color: #2012a0;
+        }
+        
+        .skin-secret .operator, .skin-secret .equals {
+            background-color: #20b2aa;
+        }
+        
+        .skin-secret .clear, .skin-secret .delete {
+            background-color: #b2b2ff;
+            color: #000;
+        }
+        
+        /* Кастомный скин */
+        .skin-custom {
+            /* Стили применяются динамически */
+        }
+        
+        .secret-hint {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+        
+        @media (max-width: 400px) {
+            .calculator {
+                width: 100%;
+                max-width: 320px;
+                margin-top: 80px;
+            }
+            
+            button {
+                height: 65px;
+                font-size: 1.3rem;
+            }
+            
+            .display {
+                font-size: 2rem;
+                padding: 15px;
+            }
+            
+            .top-controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .control-buttons {
+                align-self: flex-end;
+            }
+            
+            .icon-btn, .telegram-link {
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+            
+            .stats-counter {
+                top: 100px;
+                left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Панель управления сверху -->
+    <div class="top-controls">
+        <a href="https://t.me/calculatorkot" target="_blank" class="telegram-link" id="telegramLink">✈️</a>
+        
+        <div class="control-buttons">
+            <button class="icon-btn" id="historyBtn" title="История вычислений">📜</button>
+            <button class="icon-btn" id="achievementsBtn" title="Достижения">🏆</button>
+            <button class="icon-btn" id="skinsBtn" title="Магазин скинов">🎨</button>
+            <button class="icon-btn settings-btn" id="settingsBtn" title="Настройки">⚙️</button>
+        </div>
+    </div>
+    
+    <div class="stats-counter" id="statsCounter">Вычислений: 0</div>
+    
+    <!-- Калькулятор -->
+    <div class="calculator skin-default" id="calculator">
+        <div class="display">
+            <div class="previous-operand"></div>
+            <div class="current-operand">0</div>
+        </div>
+        
+        <div class="buttons">
+            <button class="clear" data-action="clear">C</button>
+            <button class="delete" data-action="delete">⌫</button>
+            <button class="operator" data-operation="/">÷</button>
+            <button class="operator" data-operation="*">×</button>
+            
+            <button class="number" data-number="7">7</button>
+            <button class="number" data-number="8">8</button>
+            <button class="number" data-number="9">9</button>
+            <button class="operator" data-operation="-">-</button>
+            
+            <button class="number" data-number="4">4</button>
+            <button class="number" data-number="5">5</button>
+            <button class="number" data-number="6">6</button>
+            <button class="operator" data-operation="+">+</button>
+            
+            <button class="number" data-number="1">1</button>
+            <button class="number" data-number="2">2</button>
+            <button class="number" data-number="3">3</button>
+            <button class="equals" data-action="equals">=</button>
+            
+            <button class="number" data-number="0">0</button>
+            <button class="decimal" data-decimal=".">.</button>
+        </div>
+    </div>
+    
+    <!-- Модальное окно истории -->
+    <div class="modal" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📜 История вычислений</h2>
+                <button class="close-btn" id="closeHistory">&times;</button>
+            </div>
+            <div class="history-list" id="historyList">
+                <!-- История будет добавляться с помощью JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно настроек -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">⚙️ Настройки</h2>
+                <button class="close-btn" id="closeSettings">&times;</button>
+            </div>
+            <div class="settings-list">
+                <div class="settings-section">
+                    <h3>Фон калькулятора</h3>
+                    <div class="setting-item">
+                        <label>Загрузить свой фон</label>
+                        <div class="bg-upload">
+                            <input type="file" id="bgUpload" accept="image/*">
+                            <label for="bgUpload">Выбрать файл</label>
+                            <button class="bg-reset" id="bgReset">Сбросить</button>
+                        </div>
+                        <div class="bg-preview" id="bgPreview"></div>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Создать свой скин</h3>
+                    <div class="setting-item">
+                        <label>Цвет фона калькулятора</label>
+                        <input type="color" id="skinBgColor" value="#1a1a1a" class="custom-skin-input">
+                    </div>
+                    <div class="setting-item">
+                        <label>Цвет кнопок с цифрами</label>
+                        <input type="color" id="skinNumberColor" value="#333333" class="custom-skin-input">
+                    </div>
+                    <div class="setting-item">
+                        <label>Цвет кнопок операций</label>
+                        <input type="color" id="skinOperatorColor" value="#ff9500" class="custom-skin-input">
+                    </div>
+                    <div class="setting-item">
+                        <label>Цвет текста дисплея</label>
+                        <input type="color" id="skinDisplayTextColor" value="#ffffff" class="custom-skin-input">
+                    </div>
+                    <div class="setting-item">
+                        <button class="apply-skin-btn" id="applyCustomSkin">Применить кастомный скин</button>
+                        <button class="bg-reset" id="resetCustomSkin">Сбросить</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Экспорт/Импорт данных</h3>
+                    <div class="setting-item">
+                        <label>Сохранить все данные</label>
+                        <button class="apply-skin-btn" id="exportData">Экспорт</button>
+                    </div>
+                    <div class="setting-item">
+                        <label>Загрузить данные</label>
+                        <input type="file" id="importData" accept=".json" style="display: none;">
+                        <label for="importData" style="display: inline-block; background: #333; padding: 8px 15px; border-radius: 5px; cursor: pointer;">Импорт</label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Сброс данных</h3>
+                    <div class="setting-item">
+                        <label>Удалить все сохраненные данные</label>
+                        <button class="bg-reset" id="resetAllData">Сбросить всё</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно достижений -->
+    <div class="modal" id="achievementsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🏆 Достижения</h2>
+                <button class="close-btn" id="closeAchievements">&times;</button>
+            </div>
+            <div class="achievements-list" id="achievementsList">
+                <!-- Достижения будут добавляться с помощью JS -->
+            </div>
+            <div class="telegram-help">
+                <p>Не получается пройти? Заходи в наш телеграмм канал, там есть подсказки!</p>
+                <a href="https://t.me/calculatorkot" target="_blank">@calculatorkot</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Модальное окно магазина скинов -->
+    <div class="modal" id="skinsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🎨 Магазин скинов</h2>
+                <button class="close-btn" id="closeSkins">&times;</button>
+            </div>
+            <div class="skins-list" id="skinsList">
+                <!-- Скины будут добавляться с помощью JS -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Уведомление -->
+    <div class="notification" id="notification">
+        <div class="notification-title" id="notificationTitle"></div>
+        <div class="notification-message" id="notificationMessage"></div>
+    </div>
+
+    <script>
+        // Класс базы данных
+        class Database {
+            constructor() {
+                this.dbName = 'calculatorDB';
+                this.init();
+            }
+            
+            init() {
+                if (!localStorage.getItem(this.dbName)) {
+                    const initialData = {
+                        achievements: {},
+                        skins: {},
+                        stats: {
+                            calculations: 0,
+                            lastSkin: 'default',
+                            customBackground: null,
+                            unlockedAchievements: 0,
+                            secretNumberFound: false
+                        },
+                        history: [],
+                        customSkin: null
+                    };
+                    
+                    for (const key in achievements) {
+                        initialData.achievements[key] = false;
+                    }
+                    
+                    for (const key in skins) {
+                        initialData.skins[key] = skins[key].defaultUnlocked || false;
+                    }
+                    
+                    localStorage.setItem(this.dbName, JSON.stringify(initialData));
+                }
+            }
+            
+            getData() {
+                return JSON.parse(localStorage.getItem(this.dbName));
+            }
+            
+            updateData(data) {
+                localStorage.setItem(this.dbName, JSON.stringify(data));
+            }
+            
+            updateAchievement(id, unlocked) {
+                const data = this.getData();
+                data.achievements[id] = unlocked;
+                this.updateData(data);
+            }
+            
+            updateSkin(id, unlocked) {
+                const data = this.getData();
+                data.skins[id] = unlocked;
+                this.updateData(data);
+            }
+            
+            incrementCalculations() {
+                const data = this.getData();
+                data.stats.calculations++;
+                this.updateData(data);
+            }
+            
+            setLastSkin(skinId) {
+                const data = this.getData();
+                data.stats.lastSkin = skinId;
+                this.updateData(data);
+            }
+            
+            setCustomBackground(bgData) {
+                const data = this.getData();
+                data.stats.customBackground = bgData;
+                this.updateData(data);
+            }
+            
+            addHistory(expression, result) {
+                const data = this.getData();
+                const historyEntry = {
+                    expression: expression,
+                    result: result,
+                    timestamp: new Date().toLocaleString()
+                };
+                data.history.unshift(historyEntry);
+                if (data.history.length > 50) {
+                    data.history = data.history.slice(0, 50);
+                }
+                this.updateData(data);
+            }
+            
+            getHistory() {
+                const data = this.getData();
+                return data.history || [];
+            }
+            
+            setCustomSkin(skinData) {
+                const data = this.getData();
+                data.customSkin = skinData;
+                this.updateData(data);
+            }
+            
+            getCustomSkin() {
+                const data = this.getData();
+                return data.customSkin;
+            }
+            
+            setSecretNumberFound(found) {
+                const data = this.getData();
+                data.stats.secretNumberFound = found;
+                this.updateData(data);
+            }
+            
+            getSecretNumberFound() {
+                const data = this.getData();
+                return data.stats.secretNumberFound || false;
+            }
+            
+            exportData() {
+                return JSON.stringify(this.getData());
+            }
+            
+            importData(jsonData) {
+                try {
+                    const data = JSON.parse(jsonData);
+                    localStorage.setItem(this.dbName, jsonData);
+                    return true;
+                } catch (e) {
+                    console.error('Ошибка импорта данных:', e);
+                    return false;
+                }
+            }
+            
+            resetAll() {
+                localStorage.removeItem(this.dbName);
+                this.init();
+                return this.getData();
+            }
+        }
+
+        // Класс калькулятора
+        class Calculator {
+            constructor(previousOperandElement, currentOperandElement) {
+                this.previousOperandElement = previousOperandElement;
+                this.currentOperandElement = currentOperandElement;
+                this.db = new Database();
+                this.clear();
+                this.lastResult = null;
+            }
+            
+            clear() {
+                this.currentOperand = '0';
+                this.previousOperand = '';
+                this.operation = undefined;
+                this.shouldResetScreen = false;
+            }
+            
+            delete() {
+                if (this.currentOperand === '0') return;
+                if (this.currentOperand.length === 1) {
+                    this.currentOperand = '0';
+                } else {
+                    this.currentOperand = this.currentOperand.toString().slice(0, -1);
+                }
+            }
+            
+            appendNumber(number) {
+                if (this.shouldResetScreen) {
+                    this.currentOperand = '';
+                    this.shouldResetScreen = false;
+                }
+                
+                if (number === '.' && this.currentOperand.includes('.')) return;
+                
+                if (this.currentOperand === '0' && number !== '.') {
+                    this.currentOperand = number;
+                } else {
+                    this.currentOperand = this.currentOperand.toString() + number.toString();
+                }
+            }
+            
+            chooseOperation(operation) {
+                if (this.currentOperand === '0' && this.previousOperand === '') return;
+                
+                if (this.previousOperand !== '') {
+                    this.calculate();
+                }
+                
+                this.operation = operation;
+                this.previousOperand = this.currentOperand;
+                this.currentOperand = '0';
+            }
+            
+            calculate() {
+                let computation;
+                const prev = parseFloat(this.previousOperand);
+                const current = parseFloat(this.currentOperand);
+                
+                if (isNaN(prev) || isNaN(current)) return;
+                
+                switch (this.operation) {
+                    case '+':
+                        computation = prev + current;
+                        break;
+                    case '-':
+                        computation = prev - current;
+                        break;
+                    case '*':
+                        computation = prev * current;
+                        break;
+                    case '/':
+                        if (current === 0) {
+                            this.showNotification("Ошибка", "Нельзя делить на ноль!");
+                            this.clear();
+                            return;
+                        }
+                        computation = prev / current;
+                        break;
+                    default:
+                        return;
+                }
+                
+                this.lastResult = computation;
+                
+                // Сохраняем в историю
+                const expression = `${prev} ${this.getOperationSymbol(this.operation)} ${current} = ${computation}`;
+                this.db.addHistory(expression, computation);
+                
+                // Округление до 10 знаков после запятой
+                this.currentOperand = Math.round(computation * 10000000000) / 10000000000;
+                this.operation = undefined;
+                this.previousOperand = '';
+                this.shouldResetScreen = true;
+                
+                // Увеличиваем счетчик вычислений
+                this.db.incrementCalculations();
+                this.updateStatsCounter();
+                
+                // Проверка на достижения
+                this.checkAchievements(computation);
+                
+                return computation;
+            }
+            
+            getOperationSymbol(operation) {
+                switch(operation) {
+                    case '+': return '+';
+                    case '-': return '-';
+                    case '*': return '×';
+                    case '/': return '÷';
+                    default: return operation;
+                }
+            }
+            
+            checkAchievements(result) {
+                const data = this.db.getData();
+                let newAchievements = [];
+                
+                // Проверяем, достигнуто ли 1 миллион
+                if (result >= 1000000 && !data.achievements.millionaire) {
+                    data.achievements.millionaire = true;
+                    newAchievements.push('millionaire');
+                }
+                
+                // Проверяем секретное число 2012
+                if (result === 2012 && !data.achievements.secretNumber && !data.stats.secretNumberFound) {
+                    data.achievements.secretNumber = true;
+                    data.stats.secretNumberFound = true;
+                    newAchievements.push('secretNumber');
+                }
+                
+                // Проверяем другие достижения
+                if (result < 0 && !data.achievements.negative) {
+                    data.achievements.negative = true;
+                    newAchievements.push('negative');
+                }
+                
+                if (result === 0 && !data.achievements.zero) {
+                    data.achievements.zero = true;
+                    newAchievements.push('zero');
+                }
+                
+                if (Math.abs(result) > 10000 && !data.achievements.bigNumber) {
+                    data.achievements.bigNumber = true;
+                    newAchievements.push('bigNumber');
+                }
+                
+                if (result % 1 !== 0 && !data.achievements.decimal) {
+                    data.achievements.decimal = true;
+                    newAchievements.push('decimal');
+                }
+                
+                // Достижение за 10 вычислений
+                if (data.stats.calculations >= 10 && !data.achievements.calculatorMaster) {
+                    data.achievements.calculatorMaster = true;
+                    newAchievements.push('calculatorMaster');
+                }
+                
+                // Достижение за использование всех скинов
+                let unlockedSkins = 0;
+                for (const skinId in data.skins) {
+                    if (data.skins[skinId]) unlockedSkins++;
+                }
+                if (unlockedSkins >= 5 && !data.achievements.skinCollector) {
+                    data.achievements.skinCollector = true;
+                    newAchievements.push('skinCollector');
+                }
+                
+                // Достижение за большие числа
+                if (Math.abs(result) > 1000000 && !data.achievements.megaNumber) {
+                    data.achievements.megaNumber = true;
+                    newAchievements.push('megaNumber');
+                }
+                
+                // Достижение за повторяющиеся числа
+                const numStr = result.toString();
+                if (/^(\d)\1+$/.test(numStr.replace('.', '')) && !data.achievements.repeatingNumbers) {
+                    data.achievements.repeatingNumbers = true;
+                    newAchievements.push('repeatingNumbers');
+                }
+                
+                // Сохраняем изменения
+                this.db.updateData(data);
+                
+                // Показываем уведомления о новых достижениях
+                newAchievements.forEach(achievementId => {
+                    if (achievements[achievementId]) {
+                        this.showAchievementNotification(
+                            achievements[achievementId].title,
+                            achievements[achievementId].description
+                        );
+                        
+                        // Разблокируем связанные скины
+                        if (achievements[achievementId].unlocksSkin) {
+                            this.db.updateSkin(achievements[achievementId].unlocksSkin, true);
+                        }
+                    }
+                });
+                
+                // Обновляем список достижений и скинов
+                updateAchievementsList();
+                updateSkinsList();
+            }
+            
+            showNotification(title, message) {
+                const notification = document.getElementById('notification');
+                const notificationTitle = document.getElementById('notificationTitle');
+                const notificationMessage = document.getElementById('notificationMessage');
+                
+                notificationTitle.textContent = title;
+                notificationMessage.textContent = message;
+                notification.classList.remove('achievement');
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            showAchievementNotification(title, message) {
+                const notification = document.getElementById('notification');
+                const notificationTitle = document.getElementById('notificationTitle');
+                const notificationMessage = document.getElementById('notificationMessage');
+                
+                notificationTitle.textContent = title;
+                notificationMessage.textContent = message;
+                notification.classList.add('achievement', 'show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 4000);
+            }
+            
+            updateStatsCounter() {
+                const data = this.db.getData();
+                document.getElementById('statsCounter').textContent = `Вычислений: ${data.stats.calculations}`;
+            }
+            
+            updateDisplay() {
+                this.currentOperandElement.innerText = this.currentOperand;
+                
+                if (this.operation != null) {
+                    let displayOperation = this.operation;
+                    // Заменяем символы для отображения
+                    if (displayOperation === '/') displayOperation = '÷';
+                    if (displayOperation === '*') displayOperation = '×';
+                    
+                    this.previousOperandElement.innerText = 
+                        `${this.previousOperand} ${displayOperation}`;
+                } else {
+                    this.previousOperandElement.innerText = '';
+                }
+            }
+        }
+        
+        // Система достижений
+        const achievements = {
+            millionaire: {
+                id: 'millionaire',
+                title: 'Миллионер',
+                description: 'Достигнуть 1,000,000 в расчетах',
+                icon: '💰',
+                unlocksSkin: 'gold'
+            },
+            negative: {
+                id: 'negative',
+                title: 'В минус',
+                description: 'Получить отрицательное число',
+                icon: '➖',
+                unlocksSkin: 'dark'
+            },
+            zero: {
+                id: 'zero',
+                title: 'Ноль',
+                description: 'Получить ноль в результате',
+                icon: '0️⃣',
+                unlocksSkin: 'default'
+            },
+            bigNumber: {
+                id: 'bigNumber',
+                title: 'Большое число',
+                description: 'Превысить 10,000 в расчетах',
+                icon: '🔢',
+                unlocksSkin: 'blue'
+            },
+            decimal: {
+                id: 'decimal',
+                title: 'Десятичные дроби',
+                description: 'Получить дробное число',
+                icon: '🔟',
+                unlocksSkin: 'purple'
+            },
+            calculatorMaster: {
+                id: 'calculatorMaster',
+                title: 'Мастер вычислений',
+                description: 'Выполнить 10 вычислений',
+                icon: '🧮',
+                unlocksSkin: 'green'
+            },
+            skinCollector: {
+                id: 'skinCollector',
+                title: 'Коллекционер скинов',
+                description: 'Разблокировать 5 скинов',
+                icon: '🎨',
+                unlocksSkin: 'rainbow'
+            },
+            megaNumber: {
+                id: 'megaNumber',
+                title: 'Мега число',
+                description: 'Превысить 1,000,000 в расчетах',
+                icon: '💎',
+                unlocksSkin: 'neon'
+            },
+            repeatingNumbers: {
+                id: 'repeatingNumbers',
+                title: 'Повторяющиеся цифры',
+                description: 'Получить число из одинаковых цифр',
+                icon: '🔄',
+                unlocksSkin: 'matrix'
+            },
+            secretNumber: {
+                id: 'secretNumber',
+                title: '🌫 Секретное число',
+                description: 'Угадать число',
+                icon: '🌫',
+                unlocksSkin: 'secret'
+            }
+        };
+        
+        // Система скинов
+        const skins = {
+            default: {
+                id: 'default',
+                name: 'Стандартный',
+                description: 'Классический темный калькулятор',
+                defaultUnlocked: true,
+                apply: function() {
+                    applySkin('skin-default');
+                }
+            },
+            dark: {
+                id: 'dark',
+                name: 'Темный',
+                description: 'Еще более темная тема',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-dark');
+                }
+            },
+            blue: {
+                id: 'blue',
+                name: 'Синий',
+                description: 'Голубая тема с градиентом',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-blue');
+                }
+            },
+            red: {
+                id: 'red',
+                name: 'Красный',
+                description: 'Огненная красная тема',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-red');
+                }
+            },
+            green: {
+                id: 'green',
+                name: 'Зеленый',
+                description: 'Природная зеленая тема',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-green');
+                }
+            },
+            gold: {
+                id: 'gold',
+                name: 'Золотой',
+                description: 'Элитный золотой скин для миллионеров',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-gold');
+                }
+            },
+            purple: {
+                id: 'purple',
+                name: 'Фиолетовый',
+                description: 'Фиолетовый градиент',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-purple');
+                }
+            },
+            pink: {
+                id: 'pink',
+                name: 'Розовый',
+                description: 'Нежная розовая тема',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-pink');
+                }
+            },
+            cyber: {
+                id: 'cyber',
+                name: 'Киберпанк',
+                description: 'Футуристический стиль',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-cyber');
+                }
+            },
+            matrix: {
+                id: 'matrix',
+                name: 'Матрица',
+                description: 'Стиль из фильма Матрица',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-matrix');
+                }
+            },
+            rainbow: {
+                id: 'rainbow',
+                name: 'Радужный',
+                description: 'Переливающийся всеми цветами',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-rainbow');
+                }
+            },
+            neon: {
+                id: 'neon',
+                name: 'Неоновый',
+                description: 'Светящийся неоновый стиль',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-neon');
+                }
+            },
+            secret: {
+                id: 'secret',
+                name: 'Секретный',
+                description: 'Секретный скин для избранных',
+                defaultUnlocked: false,
+                apply: function() {
+                    applySkin('skin-secret');
+                }
+            },
+            custom: {
+                id: 'custom',
+                name: 'Свой скин',
+                description: 'Ваш собственный дизайн',
+                defaultUnlocked: true,
+                apply: function() {
+                    applyCustomSkinFromData();
+                }
+            }
+        };
+        
+        // Применение скина
+        function applySkin(skinClass) {
+            const calculator = document.getElementById('calculator');
+            
+            // Удаляем все классы скинов
+            const skinClasses = Object.keys(skins).map(skin => `skin-${skin}`);
+            calculator.classList.remove(...skinClasses);
+            
+            // Добавляем новый скин
+            calculator.classList.add(skinClass);
+            
+            // Сохраняем в базу данных
+            const skinId = skinClass.replace('skin-', '');
+            if (skinId !== 'custom') {
+                calculatorInstance.db.setLastSkin(skinId);
+            }
+            
+            // Показываем уведомление
+            if (skinId !== 'custom') {
+                calculatorInstance.showNotification("Скин применен", "Внешний вид калькулятора изменен");
+            }
+        }
+        
+        // Создание кастомного скина
+        function createCustomSkin() {
+            const bgColor = document.getElementById('skinBgColor').value;
+            const numberColor = document.getElementById('skinNumberColor').value;
+            const operatorColor = document.getElementById('skinOperatorColor').value;
+            const displayTextColor = document.getElementById('skinDisplayTextColor').value;
+            
+            const skinData = {
+                bgColor: bgColor,
+                numberColor: numberColor,
+                operatorColor: operatorColor,
+                displayTextColor: displayTextColor
+            };
+            
+            calculatorInstance.db.setCustomSkin(skinData);
+            applyCustomSkinFromData();
+            
+            calculatorInstance.showNotification("Кастомный скин создан", "Ваш скин успешно сохранен и применен");
+        }
+        
+        function applyCustomSkinFromData() {
+            const skinData = calculatorInstance.db.getCustomSkin();
+            if (!skinData) return;
+            
+            const calculator = document.getElementById('calculator');
+            
+            // Удаляем все классы скинов
+            const skinClasses = Object.keys(skins).map(skin => `skin-${skin}`);
+            calculator.classList.remove(...skinClasses);
+            
+            // Добавляем класс кастомного скина
+            calculator.classList.add('skin-custom');
+            
+            // Применяем инлайновые стили
+            calculator.style.backgroundColor = skinData.bgColor;
+            calculator.style.color = skinData.displayTextColor;
+            
+            // Обновляем стили кнопок
+            document.querySelectorAll('.number, .decimal').forEach(btn => {
+                btn.style.backgroundColor = skinData.numberColor;
+                btn.style.color = skinData.displayTextColor;
+            });
+            
+            document.querySelectorAll('.operator, .equals').forEach(btn => {
+                btn.style.backgroundColor = skinData.operatorColor;
+                btn.style.color = '#000';
+            });
+            
+            document.querySelector('.display').style.backgroundColor = skinData.bgColor;
+            document.querySelector('.display').style.color = skinData.displayTextColor;
+            document.querySelector('.current-operand').style.color = skinData.displayTextColor;
+            
+            calculatorInstance.db.setLastSkin('custom');
+        }
+        
+        // Обновление списка достижений
+        function updateAchievementsList() {
+            const achievementsList = document.getElementById('achievementsList');
+            const data = calculatorInstance.db.getData();
+            
+            achievementsList.innerHTML = '';
+            
+            for (const key in achievements) {
+                const achievement = achievements[key];
+                const isUnlocked = data.achievements[key] || false;
+                const achievementItem = document.createElement('div');
+                achievementItem.className = `achievement-item ${isUnlocked ? 'unlocked' : ''}`;
+                
+                achievementItem.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-info">
+                        <h3>${achievement.title} ${isUnlocked ? '<span class="badge">✔</span>' : ''}</h3>
+                        <p>${achievement.description}</p>
+                        ${key === 'secretNumber' && !isUnlocked ? '<div class="secret-hint">Подсказка: Попробуйте ввести число, связанное с годом...</div>' : ''}
+                    </div>
+                `;
+                
+                achievementsList.appendChild(achievementItem);
+            }
+        }
+        
+        // Обновление списка скинов
+        function updateSkinsList() {
+            const skinsList = document.getElementById('skinsList');
+            const data = calculatorInstance.db.getData();
+            
+            skinsList.innerHTML = '';
+            
+            for (const key in skins) {
+                const skin = skins[key];
+                const isUnlocked = data.skins[key] || false;
+                const skinItem = document.createElement('div');
+                skinItem.className = `skin-item ${isUnlocked ? 'unlocked' : ''}`;
+                
+                // Создаем предпросмотр скина
+                let previewHTML = '';
+                if (key === 'default') previewHTML = '🧮';
+                else if (key === 'dark') previewHTML = '🌑';
+                else if (key === 'blue') previewHTML = '🔵';
+                else if (key === 'red') previewHTML = '🔴';
+                else if (key === 'green') previewHTML = '🟢';
+                else if (key === 'gold') previewHTML = '💰';
+                else if (key === 'purple') previewHTML = '🟣';
+                else if (key === 'pink') previewHTML = '🌸';
+                else if (key === 'cyber') previewHTML = '🤖';
+                else if (key === 'matrix') previewHTML = '💚';
+                else if (key === 'rainbow') previewHTML = '🌈';
+                else if (key === 'neon') previewHTML = '💡';
+                else if (key === 'secret') previewHTML = '🌫';
+                else if (key === 'custom') previewHTML = '🎨';
+                
+                skinItem.innerHTML = `
+                    <div class="skin-preview">${previewHTML}</div>
+                    <div class="skin-info">
+                        <h3>${skin.name} ${!isUnlocked && key !== 'custom' ? '<span class="badge">🔒</span>' : ''}</h3>
+                        <p>${skin.description}</p>
+                        <button class="apply-skin-btn" data-skin="${key}" ${!isUnlocked && key !== 'custom' ? 'disabled' : ''}>
+                            ${isUnlocked || key === 'custom' ? 'Применить' : 'Заблокировано'}
+                        </button>
+                    </div>
+                `;
+                
+                skinsList.appendChild(skinItem);
+            }
+            
+            // Добавляем обработчики для кнопок применения скинов
+            document.querySelectorAll('.apply-skin-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const skinId = this.getAttribute('data-skin');
+                    if (skins[skinId]) {
+                        skins[skinId].apply();
+                        closeModal('skinsModal');
+                    }
+                });
+            });
+        }
+        
+        // Обновление истории вычислений
+        function updateHistoryList() {
+            const historyList = document.getElementById('historyList');
+            const history = calculatorInstance.db.getHistory();
+            
+            historyList.innerHTML = '';
+            
+            if (history.length === 0) {
+                historyList.innerHTML = '<div style="text-align: center; color: #aaa; padding: 20px;">История вычислений пуста</div>';
+                return;
+            }
+            
+            history.forEach(entry => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-expression">${entry.expression}</div>
+                    <div class="history-timestamp">${entry.timestamp}</div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+        
+        // Загрузка фона
+        function loadBackground() {
+            const data = calculatorInstance.db.getData();
+            const bgPreview = document.getElementById('bgPreview');
+            
+            if (data.stats.customBackground) {
+                document.body.style.backgroundImage = `url(${data.stats.customBackground})`;
+                document.body.classList.add('custom-bg');
+                bgPreview.style.backgroundImage = `url(${data.stats.customBackground})`;
+            } else {
+                document.body.style.backgroundImage = '';
+                document.body.classList.remove('custom-bg');
+                bgPreview.style.backgroundImage = '';
+            }
+        }
+        
+        // Открытие и закрытие модальных окон
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Получаем элементы DOM
+        const numberButtons = document.querySelectorAll('[data-number]');
+        const operationButtons = document.querySelectorAll('[data-operation]');
+        const equalsButton = document.querySelector('[data-action="equals"]');
+        const clearButton = document.querySelector('[data-action="clear"]');
+        const deleteButton = document.querySelector('[data-action="delete"]');
+        const decimalButton = document.querySelector('[data-decimal]');
+        const previousOperandElement = document.querySelector('.previous-operand');
+        const currentOperandElement = document.querySelector('.current-operand');
+        const historyBtn = document.getElementById('historyBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const achievementsBtn = document.getElementById('achievementsBtn');
+        const skinsBtn = document.getElementById('skinsBtn');
+        const closeHistory = document.getElementById('closeHistory');
+        const closeSettings = document.getElementById('closeSettings');
+        const closeAchievements = document.getElementById('closeAchievements');
+        const closeSkins = document.getElementById('closeSkins');
+        const bgUpload = document.getElementById('bgUpload');
+        const bgReset = document.getElementById('bgReset');
+        const exportDataBtn = document.getElementById('exportData');
+        const importDataInput = document.getElementById('importData');
+        const resetAllDataBtn = document.getElementById('resetAllData');
+        const applyCustomSkinBtn = document.getElementById('applyCustomSkin');
+        const resetCustomSkinBtn = document.getElementById('resetCustomSkin');
+        
+        // Создаем экземпляр калькулятора
+        const calculatorInstance = new Calculator(previousOperandElement, currentOperandElement);
+        
+        // Инициализируем приложение
+        function initApp() {
+            const data = calculatorInstance.db.getData();
+            
+            // Загружаем сохраненный скин
+            if (data.stats.lastSkin && skins[data.stats.lastSkin]) {
+                if (data.stats.lastSkin === 'custom') {
+                    skins.custom.apply();
+                } else {
+                    skins[data.stats.lastSkin].apply();
+                }
+            }
+            
+            // Загружаем кастомный скин если есть
+            if (data.customSkin && data.stats.lastSkin === 'custom') {
+                applyCustomSkinFromData();
+            }
+            
+            // Загружаем фон
+            loadBackground();
+            
+            // Обновляем счетчик
+            calculatorInstance.updateStatsCounter();
+            
+            // Обновляем списки
+            updateAchievementsList();
+            updateSkinsList();
+            updateHistoryList();
+            
+            // Заполняем значения в конструкторе скинов
+            const skinData = data.customSkin || {
+                bgColor: '#1a1a1a',
+                numberColor: '#333333',
+                operatorColor: '#ff9500',
+                displayTextColor: '#ffffff'
+            };
+            
+            document.getElementById('skinBgColor').value = skinData.bgColor;
+            document.getElementById('skinNumberColor').value = skinData.numberColor;
+            document.getElementById('skinOperatorColor').value = skinData.operatorColor;
+            document.getElementById('skinDisplayTextColor').value = skinData.displayTextColor;
+        }
+        
+        // Инициализируем приложение
+        initApp();
+        
+        // Добавляем обработчики событий для кнопок с цифрами
+        numberButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                calculatorInstance.appendNumber(button.innerText);
+                calculatorInstance.updateDisplay();
+            });
+        });
+        
+        // Добавляем обработчики событий для кнопок операций
+        operationButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const operation = button.getAttribute('data-operation');
+                calculatorInstance.chooseOperation(operation);
+                calculatorInstance.updateDisplay();
+            });
+        });
+        
+        // Кнопка равно
+        equalsButton.addEventListener('click', () => {
+            calculatorInstance.calculate();
+            calculatorInstance.updateDisplay();
+        });
+        
+        // Кнопка очистки
+        clearButton.addEventListener('click', () => {
+            calculatorInstance.clear();
+            calculatorInstance.updateDisplay();
+        });
+        
+        // Кнопка удаления
+        deleteButton.addEventListener('click', () => {
+            calculatorInstance.delete();
+            calculatorInstance.updateDisplay();
+        });
+        
+        // Кнопка десятичной точки
+        decimalButton.addEventListener('click', () => {
+            calculatorInstance.appendNumber('.');
+            calculatorInstance.updateDisplay();
+        });
+        
+        // Кнопки открытия модальных окон
+        historyBtn.addEventListener('click', () => {
+            updateHistoryList();
+            openModal('historyModal');
+        });
+        
+        settingsBtn.addEventListener('click', () => {
+            openModal('settingsModal');
+        });
+        
+        achievementsBtn.addEventListener('click', () => {
+            openModal('achievementsModal');
+        });
+        
+        skinsBtn.addEventListener('click', () => {
+            openModal('skinsModal');
+        });
+        
+        // Кнопки закрытия модальных окон
+        closeHistory.addEventListener('click', () => {
+            closeModal('historyModal');
+        });
+        
+        closeSettings.addEventListener('click', () => {
+            closeModal('settingsModal');
+        });
+        
+        closeAchievements.addEventListener('click', () => {
+            closeModal('achievementsModal');
+        });
+        
+        closeSkins.addEventListener('click', () => {
+            closeModal('skinsModal');
+        });
+        
+        // Закрытие модальных окон при клике вне контента
+        window.addEventListener('click', (event) => {
+            if (event.target.id === 'historyModal') {
+                closeModal('historyModal');
+            }
+            if (event.target.id === 'settingsModal') {
+                closeModal('settingsModal');
+            }
+            if (event.target.id === 'achievementsModal') {
+                closeModal('achievementsModal');
+            }
+            if (event.target.id === 'skinsModal') {
+                closeModal('skinsModal');
+            }
+        });
+        
+        // Загрузка фона
+        bgUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const bgData = e.target.result;
+                    calculatorInstance.db.setCustomBackground(bgData);
+                    loadBackground();
+                    calculatorInstance.showNotification("Фон обновлен", "Новый фон успешно загружен");
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        // Сброс фона
+        bgReset.addEventListener('click', function() {
+            calculatorInstance.db.setCustomBackground(null);
+            loadBackground();
+            calculatorInstance.showNotification("Фон сброшен", "Установлен фон по умолчанию");
+        });
+        
+        // Применение кастомного скина
+        applyCustomSkinBtn.addEventListener('click', function() {
+            createCustomSkin();
+        });
+        
+        // Сброс кастомного скина
+        resetCustomSkinBtn.addEventListener('click', function() {
+            calculatorInstance.db.setCustomSkin(null);
+            skins.default.apply();
+            calculatorInstance.showNotification("Скин сброшен", "Установлен стандартный скин");
+        });
+        
+        // Экспорт данных
+        exportDataBtn.addEventListener('click', function() {
+            const data = calculatorInstance.db.exportData();
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'calculator_data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            calculatorInstance.showNotification("Данные экспортированы", "Файл сохранен как calculator_data.json");
+        });
+        
+        // Импорт данных
+        importDataInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (calculatorInstance.db.importData(e.target.result)) {
+                        initApp();
+                        calculatorInstance.showNotification("Данные импортированы", "Все настройки восстановлены");
+                    } else {
+                        calculatorInstance.showNotification("Ошибка", "Неверный формат файла");
+                    }
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        // Сброс всех данных
+        resetAllDataBtn.addEventListener('click', function() {
+            if (confirm("Вы уверены? Все ваши достижения, настройки и история будут удалены.")) {
+                calculatorInstance.db.resetAll();
+                initApp();
+                calculatorInstance.showNotification("Данные сброшены", "Все настройки восстановлены по умолчанию");
+            }
+        });
+        
+        // Добавляем поддержку клавиатуры
+        document.addEventListener('keydown', event => {
+            if (event.key >= '0' && event.key <= '9') {
+                calculatorInstance.appendNumber(event.key);
+                calculatorInstance.updateDisplay();
+            }
+            
+            if (event.key === '.') {
+                calculatorInstance.appendNumber('.');
+                calculatorInstance.updateDisplay();
+            }
+            
+            if (event.key === '+' || event.key === '-' || event.key === '*' || event.key === '/') {
+                let operation;
+                switch (event.key) {
+                    case '/':
+                        operation = '/';
+                        break;
+                    case '*':
+                        operation = '*';
+                        break;
+                    default:
+                        operation = event.key;
+                }
+                calculatorInstance.chooseOperation(operation);
+                calculatorInstance.updateDisplay();
+            }
+            
+            if (event.key === 'Enter' || event.key === '=') {
+                event.preventDefault();
+                calculatorInstance.calculate();
+                calculatorInstance.updateDisplay();
+            }
+            
+            if (event.key === 'Escape') {
+                calculatorInstance.clear();
+                calculatorInstance.updateDisplay();
+            }
+            
+            if (event.key === 'Backspace') {
+                calculatorInstance.delete();
+                calculatorInstance.updateDisplay();
+            }
+        });
+        
+        // Инициализация дисплея
+        calculatorInstance.updateDisplay();
+    </script>
+</body>
+</html>
